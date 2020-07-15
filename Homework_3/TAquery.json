@@ -1,0 +1,424 @@
+*************************** 1. row ***************************
+                            QUERY: SELECT info.position, ANY_VALUE(c.champion_name)
+FROM
+(
+    SELECT p.champion_id, p.position, COUNT(*) as appear
+    FROM participant as p, match_info as m
+    WHERE p.position != 'NONE'
+    AND p.position != 'DUO'
+    AND p.position != 'BOT'
+    AND p.position != 'SOLO'
+    AND m.duration BETWEEN 2400 AND 3000
+    AND m.match_id = p.match_id
+    GROUP BY p.champion_id, p.position
+    ORDER BY appear DESC
+) as info, champ as c
+WHERE c.champion_id = info.champion_id
+GROUP BY info.position
+                            TRACE: {
+  "steps": [
+    {
+      "join_preparation": {
+        "select#": 1,
+        "steps": [
+          {
+            "join_preparation": {
+              "select#": 2,
+              "steps": [
+                {
+                  "expanded_query": "/* select#2 */ select `p`.`champion_id` AS `champion_id`,`p`.`position` AS `position`,count(0) AS `appear` from `participant` `p` join `match_info` `m` where ((`p`.`position` <> 'NONE') and (`p`.`position` <> 'DUO') and (`p`.`position` <> 'BOT') and (`p`.`position` <> 'SOLO') and (`m`.`duration` between 2400 and 3000) and (`m`.`match_id` = `p`.`match_id`)) group by `p`.`champion_id`,`p`.`position` order by `appear` desc"
+                }
+              ]
+            }
+          },
+          {
+            "derived": {
+              "table": " `info`",
+              "select#": 2,
+              "materialized": true
+            }
+          },
+          {
+            "expanded_query": "/* select#1 */ select `info`.`position` AS `position`,any_value(`c`.`champion_name`) AS `ANY_VALUE(c.champion_name)` from (/* select#2 */ select `p`.`champion_id` AS `champion_id`,`p`.`position` AS `position`,count(0) AS `appear` from `participant` `p` join `match_info` `m` where ((`p`.`position` <> 'NONE') and (`p`.`position` <> 'DUO') and (`p`.`position` <> 'BOT') and (`p`.`position` <> 'SOLO') and (`m`.`duration` between 2400 and 3000) and (`m`.`match_id` = `p`.`match_id`)) group by `p`.`champion_id`,`p`.`position` order by `appear` desc) `info` join `champ` `c` where (`c`.`champion_id` = `info`.`champion_id`) group by `info`.`position`"
+          }
+        ]
+      }
+    },
+    {
+      "join_optimization": {
+        "select#": 1,
+        "steps": [
+          {
+            "join_optimization": {
+              "select#": 2,
+              "steps": [
+                {
+                  "condition_processing": {
+                    "condition": "WHERE",
+                    "original_condition": "((`p`.`position` <> 'NONE') and (`p`.`position` <> 'DUO') and (`p`.`position` <> 'BOT') and (`p`.`position` <> 'SOLO') and (`m`.`duration` between 2400 and 3000) and (`m`.`match_id` = `p`.`match_id`))",
+                    "steps": [
+                      {
+                        "transformation": "equality_propagation",
+                        "resulting_condition": "((`p`.`position` <> 'NONE') and (`p`.`position` <> 'DUO') and (`p`.`position` <> 'BOT') and (`p`.`position` <> 'SOLO') and (`m`.`duration` between 2400 and 3000) and multiple equal(`m`.`match_id`, `p`.`match_id`))"
+                      },
+                      {
+                        "transformation": "constant_propagation",
+                        "resulting_condition": "((`p`.`position` <> 'NONE') and (`p`.`position` <> 'DUO') and (`p`.`position` <> 'BOT') and (`p`.`position` <> 'SOLO') and (`m`.`duration` between 2400 and 3000) and multiple equal(`m`.`match_id`, `p`.`match_id`))"
+                      },
+                      {
+                        "transformation": "trivial_condition_removal",
+                        "resulting_condition": "((`p`.`position` <> 'NONE') and (`p`.`position` <> 'DUO') and (`p`.`position` <> 'BOT') and (`p`.`position` <> 'SOLO') and (`m`.`duration` between 2400 and 3000) and multiple equal(`m`.`match_id`, `p`.`match_id`))"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "substitute_generated_columns": {
+                  }
+                },
+                {
+                  "table_dependencies": [
+                    {
+                      "table": "`participant` `p`",
+                      "row_may_be_null": false,
+                      "map_bit": 0,
+                      "depends_on_map_bits": [
+                      ]
+                    },
+                    {
+                      "table": "`match_info` `m`",
+                      "row_may_be_null": false,
+                      "map_bit": 1,
+                      "depends_on_map_bits": [
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "ref_optimizer_key_uses": [
+                    {
+                      "table": "`participant` `p`",
+                      "field": "match_id",
+                      "equals": "`m`.`match_id`",
+                      "null_rejecting": false
+                    },
+                    {
+                      "table": "`match_info` `m`",
+                      "field": "match_id",
+                      "equals": "`p`.`match_id`",
+                      "null_rejecting": false
+                    }
+                  ]
+                },
+                {
+                  "rows_estimation": [
+                    {
+                      "table": "`participant` `p`",
+                      "table_scan": {
+                        "rows": 1816966,
+                        "cost": 6504
+                      }
+                    },
+                    {
+                      "table": "`match_info` `m`",
+                      "table_scan": {
+                        "rows": 182259,
+                        "cost": 545
+                      }
+                    }
+                  ]
+                },
+                {
+                  "considered_execution_plans": [
+                    {
+                      "plan_prefix": [
+                      ],
+                      "table": "`match_info` `m`",
+                      "best_access_path": {
+                        "considered_access_paths": [
+                          {
+                            "access_type": "ref",
+                            "index": "PRIMARY",
+                            "usable": false,
+                            "chosen": false
+                          },
+                          {
+                            "rows_to_scan": 182259,
+                            "access_type": "scan",
+                            "resulting_rows": 20249,
+                            "cost": 36997,
+                            "chosen": true
+                          }
+                        ]
+                      },
+                      "condition_filtering_pct": 100,
+                      "rows_for_plan": 20249,
+                      "cost_for_plan": 36997,
+                      "rest_of_plan": [
+                        {
+                          "plan_prefix": [
+                            "`match_info` `m`"
+                          ],
+                          "table": "`participant` `p`",
+                          "best_access_path": {
+                            "considered_access_paths": [
+                              {
+                                "access_type": "ref",
+                                "index": "match_id",
+                                "rows": 9.9539,
+                                "cost": 241866,
+                                "chosen": true
+                              },
+                              {
+                                "rows_to_scan": 1816966,
+                                "access_type": "scan",
+                                "using_join_cache": true,
+                                "buffers_needed": 1,
+                                "resulting_rows": 1.19e6,
+                                "cost": 4.83e9,
+                                "chosen": false
+                              }
+                            ]
+                          },
+                          "condition_filtering_pct": 65.61,
+                          "rows_for_plan": 132240,
+                          "cost_for_plan": 278863,
+                          "chosen": true
+                        }
+                      ]
+                    },
+                    {
+                      "plan_prefix": [
+                      ],
+                      "table": "`participant` `p`",
+                      "best_access_path": {
+                        "considered_access_paths": [
+                          {
+                            "access_type": "ref",
+                            "index": "match_id",
+                            "usable": false,
+                            "chosen": false
+                          },
+                          {
+                            "rows_to_scan": 1816966,
+                            "access_type": "scan",
+                            "resulting_rows": 1.19e6,
+                            "cost": 369897,
+                            "chosen": true
+                          }
+                        ]
+                      },
+                      "condition_filtering_pct": 100,
+                      "rows_for_plan": 1.19e6,
+                      "cost_for_plan": 369897,
+                      "pruned_by_cost": true
+                    }
+                  ]
+                },
+                {
+                  "attaching_conditions_to_tables": {
+                    "original_condition": "((`p`.`match_id` = `m`.`match_id`) and (`p`.`position` <> 'NONE') and (`p`.`position` <> 'DUO') and (`p`.`position` <> 'BOT') and (`p`.`position` <> 'SOLO') and (`m`.`duration` between 2400 and 3000))",
+                    "attached_conditions_computation": [
+                    ],
+                    "attached_conditions_summary": [
+                      {
+                        "table": "`match_info` `m`",
+                        "attached": "(`m`.`duration` between 2400 and 3000)"
+                      },
+                      {
+                        "table": "`participant` `p`",
+                        "attached": "((`p`.`position` <> 'NONE') and (`p`.`position` <> 'DUO') and (`p`.`position` <> 'BOT') and (`p`.`position` <> 'SOLO'))"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "clause_processing": {
+                    "clause": "ORDER BY",
+                    "original_clause": "`appear` desc",
+                    "items": [
+                      {
+                        "item": "count(0)"
+                      }
+                    ],
+                    "resulting_clause_is_simple": false,
+                    "resulting_clause": "`appear` desc"
+                  }
+                },
+                {
+                  "clause_processing": {
+                    "clause": "GROUP BY",
+                    "original_clause": "`p`.`champion_id`,`p`.`position`",
+                    "items": [
+                      {
+                        "item": "`p`.`champion_id`"
+                      },
+                      {
+                        "item": "`p`.`position`"
+                      }
+                    ],
+                    "resulting_clause_is_simple": false,
+                    "resulting_clause": "`p`.`champion_id`,`p`.`position`"
+                  }
+                },
+                {
+                  "refine_plan": [
+                    {
+                      "table": "`match_info` `m`"
+                    },
+                    {
+                      "table": "`participant` `p`"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "condition_processing": {
+              "condition": "WHERE",
+              "original_condition": "(`c`.`champion_id` = `info`.`champion_id`)",
+              "steps": [
+                {
+                  "transformation": "equality_propagation",
+                  "resulting_condition": "multiple equal(`c`.`champion_id`, `info`.`champion_id`)"
+                },
+                {
+                  "transformation": "constant_propagation",
+                  "resulting_condition": "multiple equal(`c`.`champion_id`, `info`.`champion_id`)"
+                },
+                {
+                  "transformation": "trivial_condition_removal",
+                  "resulting_condition": "multiple equal(`c`.`champion_id`, `info`.`champion_id`)"
+                }
+              ]
+            }
+          },
+          {
+            "substitute_generated_columns": {
+            }
+          },
+          {
+            "table_dependencies": [
+              {
+                "table": " `info`",
+                "row_may_be_null": false,
+                "map_bit": 0,
+                "depends_on_map_bits": [
+                ]
+              },
+              {
+                "table": "`champ` `c`",
+                "row_may_be_null": false,
+                "map_bit": 1,
+                "depends_on_map_bits": [
+                ]
+              }
+            ]
+          },
+          {
+            "ref_optimizer_key_uses": [
+              {
+                "table": " `info`",
+                "field": "champion_id",
+                "equals": "`c`.`champion_id`",
+                "null_rejecting": false
+              },
+              {
+                "table": " `info`",
+                "field": "champion_id",
+                "equals": "`c`.`champion_id`",
+                "null_rejecting": false
+              },
+              {
+                "table": "`champ` `c`",
+                "field": "champion_id",
+                "equals": "`info`.`champion_id`",
+                "null_rejecting": false
+              }
+            ]
+          },
+          {
+            "rows_estimation": [
+              {
+                "table": " `info`",
+                "table_scan": {
+                  "rows": 132240,
+                  "cost": 6622
+                }
+              },
+              {
+                "table": "`champ` `c`",
+                "table_scan": {
+                  "rows": 139,
+                  "cost": 1
+                }
+              }
+            ]
+          },
+          {
+            "considered_execution_plans": [
+              {
+                "plan_prefix": [
+                ],
+                "table": "`champ` `c`",
+                "best_access_path": {
+                  "considered_access_paths": [
+                    {
+                      "access_type": "ref",
+                      "index": "PRIMARY",
+                      "usable": false,
+                      "chosen": false
+                    },
+                    {
+                      "rows_to_scan": 139,
+                      "access_type": "scan",
+                      "resulting_rows": 139,
+                      "cost": 28.8,
+                      "chosen": true
+                    }
+                  ]
+                },
+                "condition_filtering_pct": 100,
+                "rows_for_plan": 139,
+                "cost_for_plan": 28.8,
+                "rest_of_plan": [
+                  {
+                    "plan_prefix": [
+                      "`champ` `c`"
+                    ],
+                    "table": " `info`",
+                    "best_access_path": {
+                      "considered_access_paths": [
+                        {
+                          "access_type": "ref",
+                          "index": "<auto_key0>",
+                          "rows": 951.37,
+                          "cost": 158688,
+                          "chosen": true
+                        },
+                        {
+                          "access_type": "ref",
+                          "index": "<auto_key1>",
+                          "rows": 951.37,
+                          "cost": 158688,
+                          "chosen": false
+                        },
+                        {
+                          "rows_to_scan": 132240,
+                          "access_type": "scan",
+                          "using_join_cache": true,
+                          "buffers_needed": 1,
+                          "resulting_rows": 132240,
+                          "cost": 3.68e6,
+                          "chosen": false
+                        }
+                      ]
+                    },
+                    "condition_filtering_pct": 100,
+                    "rows_for_plan": 132240,
+                    "cost_for_plan
+MISSING_BYTES_BEYOND_MAX_MEM_SIZE: 6726
+          INSUFFICIENT_PRIVILEGES: 0
+1 row in set (0.00 sec)
+

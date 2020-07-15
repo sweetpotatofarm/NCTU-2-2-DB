@@ -1,0 +1,342 @@
+*************************** 1. row ***************************
+                            QUERY: select e.position, f.champion_name from(
+    select max(d.cnt) maxcount, d.position from(
+        select count(B.player_id) cnt, B.position
+        from match_info A, participant B, champ C
+        where A.match_id=B.match_id and (A.duration between 2400 and 3000)
+        and B.champion_id=C.champion_id
+        group by B.position, B.champion_id
+    ) as d group by d.position
+)as e,(
+    select count(B.player_id) cnt, B.position,C.champion_name
+    from match_info A, participant B, champ C
+    where A.match_id=B.match_id and (A.duration between 2400 and 3000)
+    and B.champion_id=C.champion_id
+    group by B.position, B.champion_id
+)as f
+where e.maxcount=f.cnt and e.position=f.position
+and (f.position like '%AR%' or f.position like '%UP%' or f.position like '%NG%' or f.position like 'MI%' or f.position like 'TO%')
+                            TRACE: {
+  "steps": [
+    {
+      "join_preparation": {
+        "select#": 1,
+        "steps": [
+          {
+            "join_preparation": {
+              "select#": 2,
+              "steps": [
+                {
+                  "join_preparation": {
+                    "select#": 3,
+                    "steps": [
+                      {
+                        "expanded_query": "/* select#3 */ select count(`B`.`player_id`) AS `cnt`,`B`.`position` AS `position` from `match_info` `A` join `participant` `B` join `champ` `C` where ((`A`.`match_id` = `B`.`match_id`) and (`A`.`duration` between 2400 and 3000) and (`B`.`champion_id` = `C`.`champion_id`)) group by `B`.`position`,`B`.`champion_id`"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "derived": {
+                    "table": " `d`",
+                    "select#": 3,
+                    "materialized": true
+                  }
+                },
+                {
+                  "expanded_query": "/* select#2 */ select max(`d`.`cnt`) AS `maxcount`,`d`.`position` AS `position` from (/* select#3 */ select count(`B`.`player_id`) AS `cnt`,`B`.`position` AS `position` from `match_info` `A` join `participant` `B` join `champ` `C` where ((`A`.`match_id` = `B`.`match_id`) and (`A`.`duration` between 2400 and 3000) and (`B`.`champion_id` = `C`.`champion_id`)) group by `B`.`position`,`B`.`champion_id`) `d` group by `d`.`position`"
+                }
+              ]
+            }
+          },
+          {
+            "join_preparation": {
+              "select#": 4,
+              "steps": [
+                {
+                  "expanded_query": "/* select#4 */ select count(`B`.`player_id`) AS `cnt`,`B`.`position` AS `position`,`C`.`champion_name` AS `champion_name` from `match_info` `A` join `participant` `B` join `champ` `C` where ((`A`.`match_id` = `B`.`match_id`) and (`A`.`duration` between 2400 and 3000) and (`B`.`champion_id` = `C`.`champion_id`)) group by `B`.`position`,`B`.`champion_id`"
+                }
+              ]
+            }
+          },
+          {
+            "derived": {
+              "table": " `e`",
+              "select#": 2,
+              "materialized": true
+            }
+          },
+          {
+            "derived": {
+              "table": " `f`",
+              "select#": 4,
+              "materialized": true
+            }
+          },
+          {
+            "expanded_query": "/* select#1 */ select `e`.`position` AS `position`,`f`.`champion_name` AS `champion_name` from (/* select#2 */ select max(`d`.`cnt`) AS `maxcount`,`d`.`position` AS `position` from (/* select#3 */ select count(`B`.`player_id`) AS `cnt`,`B`.`position` AS `position` from `match_info` `A` join `participant` `B` join `champ` `C` where ((`A`.`match_id` = `B`.`match_id`) and (`A`.`duration` between 2400 and 3000) and (`B`.`champion_id` = `C`.`champion_id`)) group by `B`.`position`,`B`.`champion_id`) `d` group by `d`.`position`) `e` join (/* select#4 */ select count(`B`.`player_id`) AS `cnt`,`B`.`position` AS `position`,`C`.`champion_name` AS `champion_name` from `match_info` `A` join `participant` `B` join `champ` `C` where ((`A`.`match_id` = `B`.`match_id`) and (`A`.`duration` between 2400 and 3000) and (`B`.`champion_id` = `C`.`champion_id`)) group by `B`.`position`,`B`.`champion_id`) `f` where ((`e`.`maxcount` = `f`.`cnt`) and (`e`.`position` = `f`.`position`) and ((`f`.`position` like '%AR%') or (`f`.`position` like '%UP%') or (`f`.`position` like '%NG%') or (`f`.`position` like 'MI%') or (`f`.`position` like 'TO%')))"
+          },
+          {
+            "functional_dependencies_of_GROUP_columns": {
+              "all_columns_of_table_map_bits": [
+                2
+              ],
+              "columns": [
+                "hw1.B.position",
+                "hw1.B.champion_id",
+                "hw1.C.champion_id"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "join_optimization": {
+        "select#": 1,
+        "steps": [
+          {
+            "join_optimization": {
+              "select#": 2,
+              "steps": [
+                {
+                  "join_optimization": {
+                    "select#": 3,
+                    "steps": [
+                      {
+                        "condition_processing": {
+                          "condition": "WHERE",
+                          "original_condition": "((`A`.`match_id` = `B`.`match_id`) and (`A`.`duration` between 2400 and 3000) and (`B`.`champion_id` = `C`.`champion_id`))",
+                          "steps": [
+                            {
+                              "transformation": "equality_propagation",
+                              "resulting_condition": "((`A`.`duration` between 2400 and 3000) and multiple equal(`A`.`match_id`, `B`.`match_id`) and multiple equal(`B`.`champion_id`, `C`.`champion_id`))"
+                            },
+                            {
+                              "transformation": "constant_propagation",
+                              "resulting_condition": "((`A`.`duration` between 2400 and 3000) and multiple equal(`A`.`match_id`, `B`.`match_id`) and multiple equal(`B`.`champion_id`, `C`.`champion_id`))"
+                            },
+                            {
+                              "transformation": "trivial_condition_removal",
+                              "resulting_condition": "((`A`.`duration` between 2400 and 3000) and multiple equal(`A`.`match_id`, `B`.`match_id`) and multiple equal(`B`.`champion_id`, `C`.`champion_id`))"
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "substitute_generated_columns": {
+                        }
+                      },
+                      {
+                        "table_dependencies": [
+                          {
+                            "table": "`match_info` `A`",
+                            "row_may_be_null": false,
+                            "map_bit": 0,
+                            "depends_on_map_bits": [
+                            ]
+                          },
+                          {
+                            "table": "`participant` `B`",
+                            "row_may_be_null": false,
+                            "map_bit": 1,
+                            "depends_on_map_bits": [
+                            ]
+                          },
+                          {
+                            "table": "`champ` `C`",
+                            "row_may_be_null": false,
+                            "map_bit": 2,
+                            "depends_on_map_bits": [
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "ref_optimizer_key_uses": [
+                          {
+                            "table": "`match_info` `A`",
+                            "field": "match_id",
+                            "equals": "`B`.`match_id`",
+                            "null_rejecting": false
+                          },
+                          {
+                            "table": "`participant` `B`",
+                            "field": "match_id",
+                            "equals": "`A`.`match_id`",
+                            "null_rejecting": false
+                          },
+                          {
+                            "table": "`champ` `C`",
+                            "field": "champion_id",
+                            "equals": "`B`.`champion_id`",
+                            "null_rejecting": false
+                          }
+                        ]
+                      },
+                      {
+                        "rows_estimation": [
+                          {
+                            "table": "`match_info` `A`",
+                            "table_scan": {
+                              "rows": 182259,
+                              "cost": 545
+                            }
+                          },
+                          {
+                            "table": "`participant` `B`",
+                            "table_scan": {
+                              "rows": 1816966,
+                              "cost": 6504
+                            }
+                          },
+                          {
+                            "table": "`champ` `C`",
+                            "table_scan": {
+                              "rows": 139,
+                              "cost": 1
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "considered_execution_plans": [
+                          {
+                            "plan_prefix": [
+                            ],
+                            "table": "`match_info` `A`",
+                            "best_access_path": {
+                              "considered_access_paths": [
+                                {
+                                  "access_type": "ref",
+                                  "index": "PRIMARY",
+                                  "usable": false,
+                                  "chosen": false
+                                },
+                                {
+                                  "rows_to_scan": 182259,
+                                  "access_type": "scan",
+                                  "resulting_rows": 20249,
+                                  "cost": 36997,
+                                  "chosen": true
+                                }
+                              ]
+                            },
+                            "condition_filtering_pct": 100,
+                            "rows_for_plan": 20249,
+                            "cost_for_plan": 36997,
+                            "rest_of_plan": [
+                              {
+                                "plan_prefix": [
+                                  "`match_info` `A`"
+                                ],
+                                "table": "`participant` `B`",
+                                "best_access_path": {
+                                  "considered_access_paths": [
+                                    {
+                                      "access_type": "ref",
+                                      "index": "match_id",
+                                      "rows": 9.9539,
+                                      "cost": 241866,
+                                      "chosen": true
+                                    },
+                                    {
+                                      "rows_to_scan": 1816966,
+                                      "access_type": "scan",
+                                      "using_join_cache": true,
+                                      "buffers_needed": 1,
+                                      "resulting_rows": 1.82e6,
+                                      "cost": 7.36e9,
+                                      "chosen": false
+                                    }
+                                  ]
+                                },
+                                "condition_filtering_pct": 100,
+                                "rows_for_plan": 201555,
+                                "cost_for_plan": 278863,
+                                "rest_of_plan": [
+                                  {
+                                    "plan_prefix": [
+                                      "`match_info` `A`",
+                                      "`participant` `B`"
+                                    ],
+                                    "table": "`champ` `C`",
+                                    "best_access_path": {
+                                      "considered_access_paths": [
+                                        {
+                                          "access_type": "eq_ref",
+                                          "index": "PRIMARY",
+                                          "rows": 1,
+                                          "cost": 241866,
+                                          "chosen": true,
+                                          "cause": "clustered_pk_chosen_by_heuristics"
+                                        },
+                                        {
+                                          "access_type": "scan",
+                                          "chosen": false,
+                                          "cause": "covering_index_better_than_full_scan"
+                                        }
+                                      ]
+                                    },
+                                    "condition_filtering_pct": 100,
+                                    "rows_for_plan": 201555,
+                                    "cost_for_plan": 520729,
+                                    "sort_cost": 201555,
+                                    "new_cost_for_plan": 722285,
+                                    "chosen": true
+                                  }
+                                ]
+                              },
+                              {
+                                "plan_prefix": [
+                                  "`match_info` `A`"
+                                ],
+                                "table": "`champ` `C`",
+                                "best_access_path": {
+                                  "considered_access_paths": [
+                                    {
+                                      "access_type": "ref",
+                                      "index": "PRIMARY",
+                                      "usable": false,
+                                      "chosen": false
+                                    },
+                                    {
+                                      "rows_to_scan": 139,
+                                      "access_type": "scan",
+                                      "using_join_cache": true,
+                                      "buffers_needed": 1,
+                                      "resulting_rows": 139,
+                                      "cost": 562923,
+                                      "chosen": true
+                                    }
+                                  ]
+                                },
+                                "condition_filtering_pct": 100,
+                                "rows_for_plan": 2.81e6,
+                                "cost_for_plan": 599920,
+                                "pruned_by_heuristic": true
+                              }
+                            ]
+                          },
+                          {
+                            "plan_prefix": [
+                            ],
+                            "table": "`participant` `B`",
+                            "best_access_path": {
+                              "considered_access_paths": [
+                                {
+                                  "access_type": "ref",
+                                  "index": "match_id",
+                                  "usable": false,
+                                  "chosen": false
+                                },
+                                {
+                                  "rows_to_scan": 1816966,
+                                  "access_type": "scan",
+                                  "resulting_rows": 1.82e6,
+                                  "cost": 369897,
+                                  
+MISSING_BYTES_BEYOND_MAX_MEM_SIZE: 51583
+          INSUFFICIENT_PRIVILEGES: 0
+1 row in set (0.01 sec)
+
